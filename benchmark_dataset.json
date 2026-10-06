@@ -1,0 +1,95 @@
+{
+  "translation": [
+    {
+      "id": "trans_en_hi_01",
+      "direction": "English -> Hindi",
+      "task": "Translate",
+      "language": "Hindi",
+      "input": "Water is essential for all known forms of life."
+    },
+    {
+      "id": "trans_en_mr_01",
+      "direction": "English -> Marathi",
+      "task": "Translate",
+      "language": "Marathi",
+      "input": "Good morning! Please have a seat and tell me how I can help you."
+    },
+    {
+      "id": "trans_hi_en_01",
+      "direction": "Hindi -> English",
+      "task": "Translate",
+      "language": "English",
+      "input": "यह परियोजना पूरी तरह से कंप्यूटर पर बिना इंटरनेट के काम करती है।"
+    },
+    {
+      "id": "trans_mr_en_01",
+      "direction": "Marathi -> English",
+      "task": "Translate",
+      "language": "English",
+      "input": "स्थानिक पातळीवर कृत्रिम बुद्धिमत्ता वापरणे सुरक्षित आणि वेगवान आहे."
+    }
+  ],
+  "grammar": [
+    {
+      "id": "gram_grammatical_01",
+      "type": "grammatical mistakes",
+      "task": "Grammar Correction",
+      "input": "She do not knows where the books was kept yesterday."
+    },
+    {
+      "id": "gram_spelling_01",
+      "type": "spelling mistakes",
+      "task": "Grammar Correction",
+      "input": "The computr is runing an artifisial inteligence modle loaclly."
+    },
+    {
+      "id": "gram_punctuation_01",
+      "type": "punctuation mistakes",
+      "task": "Grammar Correction",
+      "input": "wait dont go yet what time does the train arrive i forgot my ticket"
+    }
+  ],
+  "rewriting": [
+    {
+      "id": "rewrite_informal_01",
+      "type": "informal text",
+      "task": "Text Rewriting",
+      "style": "Professional",
+      "input": "Hey, gonna miss the meet cuz my throat is bad. Send the slides ok?"
+    },
+    {
+      "id": "rewrite_professional_01",
+      "type": "professional text",
+      "task": "Text Rewriting",
+      "style": "Friendly",
+      "input": "Pursuant to our prior correspondence, the attached documentation delineates the parameters of our operational arrangement."
+    },
+    {
+      "id": "rewrite_short_01",
+      "type": "short message",
+      "task": "Text Rewriting",
+      "style": "Simple",
+      "input": "We regret to inform you that unexpected circumstances have necessitated the deferral of our scheduled rendezvous."
+    }
+  ],
+  "simplification": [
+    {
+      "id": "simp_complicated_01",
+      "type": "complicated sentence",
+      "task": "Text Simplification",
+      "input": "Notwithstanding the manifest veracity of the assertions posited by the committee, the empirical substantiation remains insufficiently verified."
+    },
+    {
+      "id": "simp_technical_01",
+      "type": "technical explanation",
+      "task": "Text Simplification",
+      "input": "Large language models leverage transformer-based autoregressive self-attention mechanisms to iteratively compute token probability distributions."
+    },
+    {
+      "id": "simp_long_para_01",
+      "type": "long paragraph",
+      "task": "Text Simplification",
+      "input": "Decentralized offline execution paradigms provide substantial latency mitigation and privacy guarantees by eliminating telemetric egress, ensuring that sensitive computational payloads are processed strictly within local physical boundaries rather than traversing distributed public networks."
+    }
+  ]
+}

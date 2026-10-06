@@ -1,0 +1,28 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# Environment and secrets
+.env
+.env.*
+
+# Local models and weights (never commit weights to GitHub)
+models/
+*.gguf
+*.bin
+*.pt
+*.onnx
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
