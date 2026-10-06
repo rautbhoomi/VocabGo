@@ -1,4 +1,4 @@
-"""Benchmarking utility for Offline Language Assistant.
+"""Benchmarking utility for AI Language Assistant (OpenAI API edition).
 
 Measures:
 - Per-prompt response time
@@ -6,7 +6,7 @@ Measures:
 - Success rate
 - Output quality samples
 
-Runs against local Ollama models with no external internet connection required.
+Runs against OpenAI API models (requires active internet connection and OPENAI_API_KEY).
 """
 
 import argparse
@@ -14,8 +14,12 @@ import json
 import os
 import sys
 from typing import Any, Dict, List
+from dotenv import load_dotenv
+
 from src.language_tasks import create_prompt
-from src.model import check_ollama_status, query_local_model, DEFAULT_MODEL_NAME
+from src.model import get_openai_client, query_openai_model, DEFAULT_MODEL_NAME
+
+load_dotenv()
 
 BENCHMARK_DATASET_PATH = os.path.join(
     os.path.dirname(__file__), "benchmark_dataset.json"
@@ -31,26 +35,21 @@ def load_benchmark_dataset() -> Dict[str, List[Dict[str, Any]]]:
 
 
 def run_benchmark(model_name: str, output_file: str = None):
-    """Runs all benchmark test cases against the specified local model."""
+    """Runs all benchmark test cases against the specified OpenAI model."""
     print(f"\n=======================================================")
-    print(f" Offline Language Assistant - Benchmark Runner")
+    print(f" AI Language Assistant - OpenAI Benchmark Runner")
     print(f" Model: {model_name}")
     print(f"=======================================================\n")
 
-    # Step 1: Pre-flight check
-    status = check_ollama_status()
-    if not status["running"]:
-        print("[ERROR] Ollama is not running.")
-        print("Please start Ollama first (run 'ollama serve' or launch the Ollama app).")
+    # Step 1: Pre-flight check for API Key
+    try:
+        client = get_openai_client()
+    except ValueError as err:
+        print(f"[ERROR] {err}")
+        print("Please configure your OPENAI_API_KEY in the .env file before running benchmarks.")
         sys.exit(1)
 
-    installed = status.get("models", [])
-    if installed and model_name not in installed:
-        print(f"[WARNING] Model '{model_name}' may not be installed.")
-        print(f"Installed models: {', '.join(installed)}")
-        print(f"To download it, run: ollama run {model_name}\n")
-
-    # Step 2: Load data
+    # Step 2: Load benchmark dataset
     dataset = load_benchmark_dataset()
     results = []
     total_time = 0.0
@@ -77,7 +76,11 @@ def run_benchmark(model_name: str, output_file: str = None):
             )
 
             print(f"[{item_id}] Processing...", end="", flush=True)
-            result = query_local_model(prompt=prompt, model_name=model_name)
+            result = query_openai_model(
+                prompt=prompt,
+                model_name=model_name,
+                client=client,
+            )
 
             if result["success"]:
                 elapsed = result["elapsed_seconds"]
@@ -141,13 +144,13 @@ def run_benchmark(model_name: str, output_file: str = None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run benchmark tests for Offline Language Assistant"
+        description="Run benchmark tests for AI Language Assistant via OpenAI API"
     )
     parser.add_argument(
         "--model",
         type=str,
         default=DEFAULT_MODEL_NAME,
-        help=f"Ollama model name to test (default: {DEFAULT_MODEL_NAME})",
+        help=f"OpenAI model identifier to test (default: {DEFAULT_MODEL_NAME})",
     )
     parser.add_argument(
         "--output",

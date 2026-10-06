@@ -1,15 +1,7 @@
-"""Unit tests for Offline Language Assistant.
+"""Unit tests for AI Language Assistant (OpenAI API edition).
 
-Tests:
-- Prompt generation
-- Translation prompt creation (English, Hindi, Marathi)
-- Grammar prompt creation
-- Rewrite prompt creation (Professional, Simple, Friendly)
-- Simplification prompt creation
-- Empty input handling
-- Graceful offline error handling
-
-Does NOT require a downloaded AI model or running Ollama daemon.
+Tests prompt generation, task mappings, input validation, and secure key checking.
+Does NOT require an active internet connection or a real OpenAI API key to run.
 """
 
 import unittest
@@ -20,15 +12,15 @@ from src.language_tasks import (
     TASK_SIMPLIFY,
     create_prompt,
 )
-from src.model import query_local_model, check_ollama_status
+from src.model import get_openai_client
 
 
 class TestPromptGeneration(unittest.TestCase):
-    """Tests for prompt creation logic."""
+    """Tests for prompt creation logic and task routing."""
 
     def test_translation_prompt_creation(self):
         """Test translation prompt generation for English, Hindi, and Marathi."""
-        sample_text = "Good morning, how are you today?"
+        sample_text = "Water is essential for all known forms of life."
 
         for lang in ["Hindi", "Marathi", "English"]:
             prompt = create_prompt(
@@ -42,7 +34,7 @@ class TestPromptGeneration(unittest.TestCase):
 
     def test_grammar_prompt_creation(self):
         """Test grammar correction prompt generation."""
-        sample_text = "He go to school yesterday and he eat a apple."
+        sample_text = "She do not knows where the books was kept yesterday."
         prompt = create_prompt(
             task=TASK_GRAMMAR,
             text=sample_text,
@@ -68,8 +60,7 @@ class TestPromptGeneration(unittest.TestCase):
     def test_simplification_prompt_creation(self):
         """Test text simplification prompt generation."""
         sample_text = (
-            "The photosynthetic mechanism in vascular flora orchestrates "
-            "the photochemical conversion of irradiance into saccharides."
+            "Decentralized execution paradigms provide latency mitigation and privacy guarantees."
         )
         prompt = create_prompt(
             task=TASK_SIMPLIFY,
@@ -106,28 +97,16 @@ class TestPromptGeneration(unittest.TestCase):
         self.assertIn("Unsupported task", str(context.exception))
 
 
-class TestModelOfflineHandling(unittest.TestCase):
-    """Tests for model communication error handling when Ollama is offline."""
+class TestAPIKeyValidation(unittest.TestCase):
+    """Tests for secure API key validation without exposing secrets."""
 
-    def test_check_ollama_status_offline(self):
-        """Test check_ollama_status against an invalid port returns running=False."""
-        # Port 65530 is an unused local port to simulate offline Ollama
-        status = check_ollama_status(api_base="http://127.0.0.1:65530")
-        self.assertFalse(status["running"])
-        self.assertEqual(status["models"], [])
-        self.assertIn("Ollama is not running", status["error"])
-
-    def test_query_local_model_offline(self):
-        """Test query_local_model against an offline port returns a friendly error message."""
-        result = query_local_model(
-            prompt="Hello",
-            model_name="llama3.2:1b",
-            api_base="http://127.0.0.1:65530",
-        )
-        self.assertFalse(result["success"])
-        self.assertEqual(result["response"], "")
-        self.assertIn("Ollama is not running", result["error"])
-        self.assertIn("Please start Ollama and try again", result["error"])
+    def test_placeholder_or_empty_api_key_raises_error(self):
+        """Test that missing or placeholder API key raises a clear ValueError."""
+        invalid_keys = ["", "   ", "YOUR_API_KEY_HERE", None]
+        for key in invalid_keys:
+            with self.assertRaises(ValueError) as context:
+                get_openai_client(api_key=key)
+            self.assertIn("OpenAI API key not found", str(context.exception))
 
 
 if __name__ == "__main__":

@@ -14,9 +14,9 @@ from src.prompts import (
 
 # Supported language tasks
 TASK_TRANSLATE = "Translate"
-TASK_GRAMMAR = "Grammar Correction"
-TASK_REWRITE = "Text Rewriting"
-TASK_SIMPLIFY = "Text Simplification"
+TASK_GRAMMAR = "Correct Grammar"
+TASK_REWRITE = "Rewrite"
+TASK_SIMPLIFY = "Simplify"
 
 SUPPORTED_TASKS = [
     TASK_TRANSLATE,
@@ -41,13 +41,13 @@ def create_prompt(
     """Creates a formatted prompt for the specified language task.
 
     Args:
-        task: The task to perform (Translate, Grammar Correction, Text Rewriting, Text Simplification).
+        task: The task to perform (Translate, Correct Grammar, Rewrite, Simplify).
         text: The input text to process.
         language: Target language for translation (e.g. 'Hindi', 'Marathi', 'English').
         style: Style for rewriting (e.g. 'Professional', 'Simple', 'Friendly').
 
     Returns:
-        Formatted prompt string ready for local model inference.
+        Formatted prompt string ready for model inference.
 
     Raises:
         ValueError: If input text is empty or required arguments are missing/invalid.
@@ -65,7 +65,7 @@ def create_prompt(
         return TRANSLATION_PROMPT.format(language=language.strip(), text=cleaned_text)
 
     # Grammar Correction
-    elif normalized_task in ("grammar", "grammar correction", "grammar_correction"):
+    elif normalized_task in ("correct grammar", "grammar", "grammar correction", "grammar_correction"):
         return GRAMMAR_PROMPT.format(text=cleaned_text)
 
     # Text Rewriting
@@ -75,7 +75,7 @@ def create_prompt(
         return REWRITE_PROMPT.format(style=style.strip(), text=cleaned_text)
 
     # Text Simplification
-    elif normalized_task in ("simplification", "text simplification", "simplify", "text_simplification"):
+    elif normalized_task in ("simplify", "simplification", "text simplification", "text_simplification"):
         return SIMPLIFICATION_PROMPT.format(text=cleaned_text)
 
     else:

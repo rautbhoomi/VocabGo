@@ -1,27 +1,26 @@
-# 🌐 Offline Language Assistant
+# 🌐 AI Language Assistant
 
-An AI language assistant that runs **completely locally** on your computer. It performs translation, grammar correction, text rewriting, and text simplification without requiring any internet connection or cloud API subscriptions.
+An AI language assistant built with **Streamlit** and powered by the **OpenAI API**. It provides four language features: translation, grammar correction, text rewriting, and text simplification.
+
+> **Note**: This application uses the cloud-based OpenAI API and **requires an active internet connection**. It does not run offline.
 
 ---
 
 ## 1. Overview
 
-The **Offline Language Assistant** is designed for privacy, reliability, and offline usability. Unlike standard AI tools that rely on cloud servers (such as OpenAI, Gemini, Claude, or Google Translate), this assistant runs an open-weight language model directly on your laptop's hardware using [Ollama](https://ollama.com).
-
-Once your preferred local model is downloaded, you can turn off Wi-Fi and continue using all features seamlessly.
+The **AI Language Assistant** allows you to perform advanced language processing tasks directly in a web interface. It securely connects to OpenAI's language models (such as `gpt-5-mini` or `gpt-4o-mini`) using your personal API key stored safely in a local `.env` file.
 
 ---
 
 ## 2. Features
 
-- **A. Translation**: Bidirectional translation between **English**, **Hindi**, and **Marathi**.
-- **B. Grammar Correction**: Fixes grammatical errors, spelling typos, punctuation, and sentence structure while preserving original meaning.
-- **C. Text Rewriting**: Rewrites input text into **Professional**, **Simple**, or **Friendly** styles.
-- **D. Text Simplification**: Transforms dense, complicated sentences and technical jargon into plain, easy-to-understand language.
-- **Local AI Inference**: Powered by local models running on Ollama.
-- **100% Offline Capable**: Zero internet access required after setup.
-- **Response-Time Measurement**: Tracks and displays inference latency for every request.
-- **Beginner-Friendly UI**: Clean, intuitive interface built with Streamlit.
+- **A. Translation**: Translate text between **English**, **Hindi**, and **Marathi**.
+- **B. Grammar Correction**: Corrects grammatical mistakes, spelling errors, punctuation, and sentence structure while preserving original meaning.
+- **C. Text Rewriting**: Rewrites text in three styles: **Professional**, **Simple**, or **Friendly**.
+- **D. Text Simplification**: Simplifies complex, academic, or technical text into easy-to-understand language.
+- **Secure Key Handling**: Loads your OpenAI API key from a private `.env` file (never exposed in the UI or hardcoded).
+- **Latency Tracking**: Measures and displays response generation time for each request.
+- **Clean UI**: Simple, beginner-friendly Streamlit interface.
 
 ---
 
@@ -32,13 +31,13 @@ User
  ↓
 Streamlit Frontend (app.py)
  ↓
-Python Application Logic (src/language_tasks.py)
+Secure Environment Configuration (.env -> python-dotenv)
  ↓
-Local Ollama API (http://127.0.0.1:11434)
+Python OpenAI Client (openai Python SDK)
+ ↓ (HTTPS Internet Connection)
+OpenAI API Cloud Service (e.g., gpt-5-mini / gpt-4o-mini)
  ↓
-Local AI Model (e.g., llama3.2:1b)
- ↓
-Response displayed with execution time
+Formatted response displayed with generation time
 ```
 
 ---
@@ -46,23 +45,20 @@ Response displayed with execution time
 ## 4. Requirements
 
 - **Operating System**: Windows, Linux, or macOS
-- **Python**: Version 3.11 or higher
-- **Ollama**: Free local inference engine installed from [ollama.com](https://ollama.com)
-- **RAM / Memory**: Sufficient system memory for your chosen local model (e.g., 4 GB to 8 GB+ RAM for 1B–3B parameter models)
+- **Python**: Version 3.11+
+- **OpenAI API Key**: A valid API key from [OpenAI Developer Platform](https://platform.openai.com/api-keys)
+- **Active Internet Connection**
 
 ---
 
-## 5. Installation
+## 5. Quick Installation & Setup
 
-Follow these step-by-step commands in your terminal:
-
-### Step 1: Clone the repository
+### Step 1: Clone or navigate to the project directory
 ```powershell
-git clone <repository-url>
 cd offline-language-assistant
 ```
 
-### Step 2: Create and activate a Python virtual environment
+### Step 2: (Optional) Set up a virtual environment
 **On Windows (PowerShell):**
 ```powershell
 python -m venv .venv
@@ -80,106 +76,76 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
----
+### Step 4: Configure your OpenAI API key
+Open the `.env` file in the root folder and replace the placeholder with your actual OpenAI API key:
 
-## 6. Setting Up the Local AI Model (Ollama)
+```text
+OPENAI_API_KEY=sk-proj-your_actual_api_key_here
+```
 
-Ollama runs the local AI model on your computer.
-
-1. Download and install Ollama from [https://ollama.com](https://ollama.com).
-2. Download a lightweight model of your choice by running this command in your terminal:
-   ```powershell
-   ollama run llama3.2:1b
-   ```
-   *Alternative lightweight models:*
-   - `ollama run qwen2.5:1.5b` (Great for Hindi & Marathi)
-   - `ollama run llama3.2:3b` (Higher quality, ~2 GB)
-
-*Note: Once the command finishes downloading, you can press `Ctrl + D` or type `/bye` to exit the chat prompt. The model remains installed on your computer.*
+> **Security Note**: Never commit your `.env` file or paste your actual key in public repositories. The `.gitignore` file is already set up to protect your `.env` file from Git commits.
 
 ---
 
-## 7. Running the Application
+## 6. Running the Application
 
-Ensure your virtual environment is active and run:
+To start the Streamlit web application:
 
 ```powershell
 streamlit run app.py
 ```
 
-Your default web browser will automatically open the application at `http://localhost:8501`.
+Streamlit will launch automatically in your browser at `http://localhost:8501`.
 
 ---
 
-## 8. Offline Test (Verification)
+## 7. Running Tests
 
-To verify that the application works without an internet connection:
-
-1. Start Ollama and download your selected local model (`ollama run llama3.2:1b`).
-2. Start the Streamlit application: `streamlit run app.py`.
-3. **Turn off your laptop's Wi-Fi / disconnect Ethernet**.
-4. Test any feature:
-   - Select **Translate**, choose **Hindi**, enter `Hello, welcome to our office.`, and click **Process**.
-   - Select **Grammar Correction**, enter `She do not knows the answer.`, and click **Process**.
-5. Confirm that the application responds with the result and displays the processing time, proving full offline functionality.
-
----
-
-## 9. Running Tests
-
-Unit tests do not require an active model or internet connection:
+Unit tests verify prompt formatting, task routing, and missing key validation without needing an internet connection:
 
 ```powershell
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-To run the automated benchmark across all competition task categories:
+To run the automated benchmark across all task categories with your OpenAI key:
 
 ```powershell
-python benchmark.py --model llama3.2:1b
+python benchmark.py --model gpt-5-mini
 ```
 
 ---
 
-## 10. Security and Privacy
+## 8. Security and Privacy
 
-- **Local Data Processing**: All user text is processed locally on your computer.
-- **Zero Cloud APIs**: No data is ever transmitted to OpenAI, Gemini, Claude, or any external third-party server.
-- **Privacy Assurance**: Your queries and documents stay strictly on your local machine.
-- **Repository Safety**: Model weight files (`.gguf`, binary weights) and environment files are ignored by Git and never committed to GitHub.
+- **No Hardcoded Keys**: The application never hardcodes API keys inside Python scripts.
+- **Private `.env` File**: All keys are retrieved via `python-dotenv`.
+- **UI Protection**: The API key is never rendered or revealed in the web browser interface.
+- **Git Exclusions**: The `.gitignore` file excludes `.env`, `.env.*`, `.venv`, and cache files from Git tracking.
 
 ---
 
-## 11. Project Structure
+## 9. Project Structure
 
 ```text
 offline-language-assistant/
 │
-├── app.py                      # Main Streamlit frontend
-├── benchmark.py                # Benchmark runner for local models
-├── benchmark_dataset.json      # Evaluation dataset (Translation, Grammar, Rewrite, Simplify)
-├── docs.md                     # Competition evaluation & resource trade-off documentation
-├── README.md                   # Project documentation and guide
-├── requirements.txt            # Minimal Python dependencies
-├── .gitignore                  # Git exclusions for models, cache, and venv
+├── app.py                      # Main Streamlit web application
+├── benchmark.py                # Automated benchmark runner for OpenAI models
+├── benchmark_dataset.json      # Structured test cases (Translation, Grammar, Rewrite, Simplify)
+├── docs.md                     # Technical documentation & project overview
+├── README.md                   # Project instructions and documentation
+├── requirements.txt            # Minimal dependencies: streamlit, openai, python-dotenv
+├── .env                        # Local configuration storing OPENAI_API_KEY (git-ignored)
+├── .gitignore                  # Git exclusions for secrets, virtual environment, and cache
 │
 ├── src/
 │   ├── __init__.py
-│   ├── model.py                # Local Ollama communication and error handling
-│   ├── prompts.py              # Prompt templates for all 4 language tasks
-│   └── language_tasks.py       # Task routing and prompt construction
+│   ├── model.py                # OpenAI client helper & execution timer
+│   ├── prompts.py              # Prompt templates for the 4 language tasks
+│   └── language_tasks.py       # Prompt generation and input validation
 │
 └── tests/
     ├── __init__.py
-    ├── test_basic.py           # Offline unit tests
-    └── test_live_model.py      # Live model integration test (skips if offline)
-```
-
----
-
-## 12. Suggested Initial Git Commit
-
-```powershell
-git add .
-git commit -m "Initial project setup"
+    ├── test_basic.py           # Unit tests
+    └── test_live_model.py      # Live API integration test (auto-skips if key is unset)
 ```

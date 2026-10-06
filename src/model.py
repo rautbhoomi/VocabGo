@@ -1,159 +1,86 @@
-"""Local Ollama model communication module.
+"""OpenAI model communication module.
 
 Handles:
-- Direct HTTP communication with the local Ollama API
-- Model execution timing (response speed measurement)
-- Connection and model-not-found error handling
-- Zero cloud dependencies / strictly local execution
+- Direct interaction with OpenAI Chat Completions API
+- Secure API key retrieval via python-dotenv / environment variables
+- Error handling for API authentication, rate limits, and connection issues
+- Response latency measurement
 """
 
 import os
 import time
-from typing import Any, Dict, List, Optional
-import requests
+from typing import Any, Dict, Optional
+from dotenv import load_dotenv
+from openai import OpenAI
 
-# Default local model name - configurable in one place
-# Can also be overridden by setting the OLLAMA_MODEL environment variable
-DEFAULT_MODEL_NAME = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
+load_dotenv()
 
-# Ollama local API base URL (standard Ollama port is 11434)
-DEFAULT_OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
-
-# Recommended lightweight models suitable for local laptops
-RECOMMENDED_MODELS = [
-    "llama3.2:1b",
-    "qwen2.5:1.5b",
-    "llama3.2:3b",
-    "qwen2.5:0.5b",
-]
+# Default model name
+DEFAULT_MODEL_NAME = os.getenv("OPENAI_MODEL", "gpt-5-mini")
 
 
-def check_ollama_status(api_base: str = DEFAULT_OLLAMA_HOST) -> Dict[str, Any]:
-    """Checks whether the local Ollama daemon is running and lists installed models.
+def get_openai_client(api_key: Optional[str] = None) -> OpenAI:
+    """Returns an initialized OpenAI client using the provided or environment API key.
 
     Args:
-        api_base: Base URL for the local Ollama API.
+        api_key: Optional API key. If omitted, loaded from OPENAI_API_KEY env var.
 
-    Returns:
-        Dict containing:
-            - 'running' (bool): True if Ollama service responds.
-            - 'models' (List[str]): List of locally installed model names.
-            - 'error' (Optional[str]): Error message if Ollama is unreachable.
+    Raises:
+        ValueError: If no valid API key is found.
     """
-    try:
-        response = requests.get(f"{api_base}/api/tags", timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            models_list = [m.get("name", "") for m in data.get("models", [])]
-            return {
-                "running": True,
-                "models": models_list,
-                "raw_models": data.get("models", []),
-                "error": None,
-            }
-        else:
-            return {
-                "running": False,
-                "models": [],
-                "error": f"Ollama returned unexpected HTTP status {response.status_code}.",
-            }
-    except requests.exceptions.ConnectionError:
-        return {
-            "running": False,
-            "models": [],
-            "error": "Ollama is not running.\n\nPlease start Ollama and try again.",
-        }
-    except Exception as exc:
-        return {
-            "running": False,
-            "models": [],
-            "error": f"Could not connect to Ollama: {str(exc)}",
-        }
+    key = api_key or os.getenv("OPENAI_API_KEY")
+    if not key or key.strip() == "" or key.strip() == "YOUR_API_KEY_HERE":
+        raise ValueError(
+            "OpenAI API key not found. Please set OPENAI_API_KEY in your .env file."
+        )
+    return OpenAI(api_key=key.strip())
 
 
-def query_local_model(
+def query_openai_model(
     prompt: str,
     model_name: str = DEFAULT_MODEL_NAME,
-    api_base: str = DEFAULT_OLLAMA_HOST,
-    timeout: int = 180,
+    client: Optional[OpenAI] = None,
+    temperature: float = 0.3,
 ) -> Dict[str, Any]:
-    """Sends a prompt to the local Ollama instance and returns the generated text.
+    """Sends a task prompt to OpenAI's Chat Completions API and measures latency.
 
     Args:
-        prompt: The fully formatted task prompt.
-        model_name: The name of the local Ollama model (e.g. 'llama3.2:1b').
-        api_base: Base URL of the local Ollama server.
-        timeout: Maximum seconds to wait for model response.
+        prompt: Formatted task prompt.
+        model_name: OpenAI model identifier (e.g. 'gpt-5-mini', 'gpt-4o-mini').
+        client: Optional OpenAI client instance.
+        temperature: Sampling temperature.
 
     Returns:
         Dict containing:
-            - 'success' (bool): True if response received successfully.
-            - 'response' (str): Generated text from local model.
-            - 'elapsed_seconds' (float): Time taken to complete the request.
-            - 'error' (Optional[str]): Friendly error message if call failed.
-            - 'model' (str): Model name used for inference.
+            - 'success' (bool): True if API responded successfully.
+            - 'response' (str): Generated response text.
+            - 'elapsed_seconds' (float): Time taken in seconds.
+            - 'error' (Optional[str]): Error message if call failed.
+            - 'model' (str): Model name used.
     """
     start_time = time.perf_counter()
-    url = f"{api_base}/api/generate"
-    payload = {
-        "model": model_name,
-        "prompt": prompt,
-        "stream": False,
-    }
 
     try:
-        response = requests.post(url, json=payload, timeout=timeout)
-        elapsed_seconds = round(time.perf_counter() - start_time, 2)
+        if client is None:
+            client = get_openai_client()
 
-        # Handle 404: Model not found
-        if response.status_code == 404:
-            return {
-                "success": False,
-                "response": "",
-                "elapsed_seconds": elapsed_seconds,
-                "error": (
-                    f"Model '{model_name}' has not been downloaded in Ollama.\n\n"
-                    f"To install this model locally, open your terminal and run:\n"
-                    f"ollama run {model_name}"
-                ),
-                "model": model_name,
-            }
-
-        # Check for non-200 HTTP statuses
-        if response.status_code != 200:
-            error_detail = response.text
-            try:
-                error_json = response.json()
-                if "error" in error_json:
-                    error_detail = error_json["error"]
-            except Exception:
-                pass
-
-            # Detect "not found" in error message
-            if "not found" in error_detail.lower():
-                return {
-                    "success": False,
-                    "response": "",
-                    "elapsed_seconds": elapsed_seconds,
-                    "error": (
-                        f"Model '{model_name}' has not been downloaded in Ollama.\n\n"
-                        f"To install this model locally, open your terminal and run:\n"
-                        f"ollama run {model_name}"
+        chat_completion = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a helpful, accurate, and concise AI language assistant. "
+                        "Always follow the instructions and return only the requested output."
                     ),
-                    "model": model_name,
-                }
+                },
+                {"role": "user", "content": prompt},
+            ],
+            temperature=temperature,
+        )
 
-            return {
-                "success": False,
-                "response": "",
-                "elapsed_seconds": elapsed_seconds,
-                "error": f"Ollama returned an error (HTTP {response.status_code}): {error_detail}",
-                "model": model_name,
-            }
-
-        # Success - parse response
-        data = response.json()
-        generated_text = data.get("response", "").strip()
+        elapsed_seconds = round(time.perf_counter() - start_time, 2)
+        generated_text = chat_completion.choices[0].message.content.strip()
 
         return {
             "success": True,
@@ -163,36 +90,12 @@ def query_local_model(
             "model": model_name,
         }
 
-    except requests.exceptions.ConnectionError:
-        elapsed_seconds = round(time.perf_counter() - start_time, 2)
-        return {
-            "success": False,
-            "response": "",
-            "elapsed_seconds": elapsed_seconds,
-            "error": "Ollama is not running.\n\nPlease start Ollama and try again.",
-            "model": model_name,
-        }
-
-    except requests.exceptions.Timeout:
-        elapsed_seconds = round(time.perf_counter() - start_time, 2)
-        return {
-            "success": False,
-            "response": "",
-            "elapsed_seconds": elapsed_seconds,
-            "error": (
-                f"The request timed out after {timeout} seconds. "
-                "The local model took too long to respond. "
-                "Try using a smaller model (such as llama3.2:1b or qwen2.5:0.5b)."
-            ),
-            "model": model_name,
-        }
-
     except Exception as exc:
         elapsed_seconds = round(time.perf_counter() - start_time, 2)
         return {
             "success": False,
             "response": "",
             "elapsed_seconds": elapsed_seconds,
-            "error": f"An unexpected error occurred: {str(exc)}",
+            "error": str(exc),
             "model": model_name,
         }
